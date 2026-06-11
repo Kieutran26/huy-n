@@ -34,6 +34,14 @@ export function useDocuments() {
     );
   }, []);
 
+  const deleteManyDocuments = useCallback((ids: string[]) => {
+    const idSet = new Set(ids);
+    writeStore(
+      KEYS.DOCUMENTS,
+      getSnapshot<Document>(KEYS.DOCUMENTS).filter((d) => !idSet.has(d.id))
+    );
+  }, []);
+
   /**
    * Import/upsert theo docCode (không xóa data cũ).
    * Trả về số bản ghi thêm mới và cập nhật.
@@ -67,5 +75,5 @@ export function useDocuments() {
     []
   );
 
-  return { documents, addDocument, updateDocument, deleteDocument, importDocuments };
+  return { documents, addDocument, updateDocument, deleteDocument, deleteManyDocuments, importDocuments };
 }

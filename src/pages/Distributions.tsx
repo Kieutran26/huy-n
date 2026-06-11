@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Send, Plus } from "lucide-react";
+import { Send, Plus, Undo2, Trash2 } from "lucide-react";
 import type { Distribution } from "@/types";
 import { useDistributions } from "@/hooks/useDistributions";
 import { useDocuments } from "@/hooks/useDocuments";
@@ -19,7 +19,15 @@ import { compareDate } from "@/lib/utils";
 type StatusFilter = "all" | "active" | "recalled";
 
 export default function Distributions() {
-  const { distributions, addDistribution, updateDistribution, deleteDistribution, recallDistribution } = useDistributions();
+  const {
+    distributions,
+    addDistribution,
+    updateDistribution,
+    deleteDistribution,
+    deleteManyDistributions,
+    recallDistribution,
+    recallManyDistributions,
+  } = useDistributions();
   const { documents } = useDocuments();
   const { employees } = useEmployees();
 
@@ -27,6 +35,10 @@ export default function Distributions() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
   
+  // Selection states
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+
   // Modals / Actions states
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Distribution | null>(null);
@@ -58,6 +70,56 @@ export default function Distributions() {
       )
       .sort((a, b) => compareDate(b.distributionDate, a.distributionDate));
   }, [distributions, docFilter, status, search]);
+
+  // Bulk actions logic
+  const allSelected = useMemo(() => {
+    return filtered.length > 0 && filtered.every((d) => selectedIds.has(d.id));
+  }, [filtered, selectedIds]);
+
+  function handleToggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function handleToggleSelectAll() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        filtered.forEach((d) => next.delete(d.id));
+      } else {
+        filtered.forEach((d) => next.add(d.id));
+      }
+      return next;
+    });
+  }
+
+  function handleBulkRecall() {
+    const ids = Array.from(selectedIds);
+    // Chỉ thu hồi các bản chưa thu hồi
+    const activeIdsToRecall = ids.filter((id) => {
+      const dist = distributions.find((d) => d.id === id);
+      return dist && !dist.recalled;
+    });
+
+    if (activeIdsToRecall.length === 0) {
+      toast.info("Tất cả các bản ghi đã chọn đều đã ở trạng thái thu hồi.");
+      return;
+    }
+
+    recallManyDistributions(activeIdsToRecall);
+    toast.success(`Đã thu hồi ${activeIdsToRecall.length} bản ghi phân phát`);
+    setSelectedIds(new Set());
+  }
+
+  function handleBulkDelete() {
+    deleteManyDistributions(Array.from(selectedIds));
+    toast.success(`Đã xóa ${selectedIds.size} bản ghi phân phát`);
+    setSelectedIds(new Set());
+    setBulkDeleteOpen(false);
+  }
 
   function confirmRecall() {
     if (!toRecall) return;
@@ -122,6 +184,40 @@ export default function Distributions() {
         />
       ) : (
         <>
+          {/* Thanh hành động hàng loạt */}
+          {selectedIds.size > 0 && (
+            <div className="mb-4 flex items-center justify-between rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center gap-2 font-medium">
+                <span>Đã chọn <b>{selectedIds.size}</b> bản ghi phân phát</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-amber-300 text-amber-900 hover:bg-amber-100/50"
+                  onClick={handleBulkRecall}
+                >
+                  <Undo2 className="mr-1.5 h-3.5 w-3.5" /> Thu hồi hàng loạt
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setBulkDeleteOpen(true)}
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Xóa hàng loạt
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-amber-800 hover:bg-amber-100"
+                  onClick={() => setSelectedIds(new Set())}
+                >
+                  Hủy chọn
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="mb-4 grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>Mã tài liệu</Label>
@@ -170,6 +266,10 @@ export default function Distributions() {
               onRecall={(d) => setToRecall(d)}
               onEdit={(d) => setEditing(d)}
               onDelete={(id) => setToDeleteId(id)}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onToggleSelectAll={handleToggleSelectAll}
+              allSelected={allSelected}
             />
           )}
         </>
@@ -198,6 +298,17 @@ export default function Distributions() {
         destructive
         onConfirm={confirmDelete}
         onOpenChange={(o) => !o && setToDeleteId(null)}
+      />
+
+      {/* Confirm Bulk Delete Dialog */}
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Xác nhận xóa hàng loạt?"
+        description={`Bạn có chắc chắn muốn xóa ${selectedIds.size} bản ghi phân phát đã chọn? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa tất cả"
+        destructive
+        onConfirm={handleBulkDelete}
+        onOpenChange={setBulkDeleteOpen}
       />
 
       {/* Add / Edit Form Modal */}

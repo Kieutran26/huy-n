@@ -64,9 +64,26 @@ export function useDistributions() {
     );
   }, []);
 
+  const deleteManyDistributions = useCallback((ids: string[]) => {
+    const idSet = new Set(ids);
+    writeStore(
+      KEYS.DISTRIBUTIONS,
+      getSnapshot<Distribution>(KEYS.DISTRIBUTIONS).filter((d) => !idSet.has(d.id))
+    );
+  }, []);
+
   const recallDistribution = useCallback((id: string) => {
     const list = getSnapshot<Distribution>(KEYS.DISTRIBUTIONS).map((d) =>
       d.id === id ? { ...d, recalled: true, recalledDate: todayISO() } : d
+    );
+    writeStore(KEYS.DISTRIBUTIONS, list);
+  }, []);
+
+  const recallManyDistributions = useCallback((ids: string[]) => {
+    const idSet = new Set(ids);
+    const date = todayISO();
+    const list = getSnapshot<Distribution>(KEYS.DISTRIBUTIONS).map((d) =>
+      idSet.has(d.id) ? { ...d, recalled: true, recalledDate: date } : d
     );
     writeStore(KEYS.DISTRIBUTIONS, list);
   }, []);
@@ -102,7 +119,9 @@ export function useDistributions() {
     addMany,
     updateDistribution,
     deleteDistribution,
+    deleteManyDistributions,
     recallDistribution,
+    recallManyDistributions,
     importDistributions,
   };
 }

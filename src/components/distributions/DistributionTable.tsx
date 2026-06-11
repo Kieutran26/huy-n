@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Undo2, Edit2, Trash2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -17,6 +18,10 @@ interface DistributionTableProps {
   onRecall: (dist: Distribution) => void;
   onEdit: (dist: Distribution) => void;
   onDelete: (id: string) => void;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: () => void;
+  allSelected: boolean;
 }
 
 export function DistributionTable({
@@ -24,12 +29,22 @@ export function DistributionTable({
   onRecall,
   onEdit,
   onDelete,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+  allSelected,
 }: DistributionTableProps) {
   return (
     <div className="rounded-lg border bg-card">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12 text-center">
+              <Checkbox
+                checked={allSelected}
+                onChange={onToggleSelectAll}
+              />
+            </TableHead>
             <TableHead className="w-12">STT</TableHead>
             <TableHead>Mã TL</TableHead>
             <TableHead>Tên TL</TableHead>
@@ -48,7 +63,13 @@ export function DistributionTable({
         </TableHeader>
         <TableBody>
           {distributions.map((d, i) => (
-            <TableRow key={d.id}>
+            <TableRow key={d.id} className={selectedIds.has(d.id) ? "bg-muted/30" : ""}>
+              <TableCell className="text-center">
+                <Checkbox
+                  checked={selectedIds.has(d.id)}
+                  onChange={() => onToggleSelect(d.id)}
+                />
+              </TableCell>
               <TableCell className="text-muted-foreground">{i + 1}</TableCell>
               <TableCell className="font-medium">{d.docCode}</TableCell>
               <TableCell>{d.docName}</TableCell>

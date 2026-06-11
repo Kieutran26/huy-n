@@ -70,8 +70,8 @@ export function DocumentFormModal({
   }, [open, initial]);
 
   const handleConfirm = () => {
-    if (!docCode.trim() || !docName.trim() || !currentRev.trim()) return;
-
+    if (!docCode.trim() || !docName.trim() || !currentRev.trim() || !customer.trim()) return;
+ 
     // Check duplicate code (if adding new)
     if (!initial) {
       const isDuplicate = existingCodes.some(
@@ -82,20 +82,20 @@ export function DocumentFormModal({
         return;
       }
     }
-
+ 
     onSubmit({
       docCode: docCode.trim(),
       docName: docName.trim(),
       docType: docType.trim(),
       currentRev: currentRev.trim(),
       issueDate: issueDate,
-      customer: customer.trim() || undefined,
-      aspPn: aspPn.trim() || undefined,
+      customer: customer.trim(),
+      aspPn: docName.trim(),
     });
     onOpenChange(false);
   };
-
-  const isValid = docCode.trim() && docName.trim() && currentRev.trim();
+ 
+  const isValid = docCode.trim() && docName.trim() && currentRev.trim() && customer.trim();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -113,9 +113,21 @@ export function DocumentFormModal({
             </p>
           )}
 
-          {/* Mã tài liệu */}
+          {/* Khách hàng */}
           <div className="space-y-1.5">
-            <Label htmlFor="docCode">Mã tài liệu <span className="text-destructive">*</span></Label>
+            <Label htmlFor="customer">Khách hàng <span className="text-destructive">*</span></Label>
+            <Input
+              id="customer"
+              value={customer}
+              onChange={(e) => setCustomer(e.target.value)}
+              placeholder="Ví dụ: HB01, KN01..."
+              autoComplete="off"
+            />
+          </div>
+
+          {/* Số sơ đồ */}
+          <div className="space-y-1.5">
+            <Label htmlFor="docCode">Số sơ đồ (Mã TL) <span className="text-destructive">*</span></Label>
             <Input
               id="docCode"
               value={docCode}
@@ -123,39 +135,27 @@ export function DocumentFormModal({
                 setDocCode(e.target.value);
                 setError("");
               }}
-              placeholder="Ví dụ: EN-WI1124"
+              placeholder="Ví dụ: EN-WI1120"
               disabled={!!initial}
               autoComplete="off"
             />
           </div>
 
-          {/* Tên tài liệu */}
+          {/* Mã ASP */}
           <div className="space-y-1.5">
-            <Label htmlFor="docName">Tên tài liệu <span className="text-destructive">*</span></Label>
+            <Label htmlFor="docName">Mã ASP (Tên TL) <span className="text-destructive">*</span></Label>
             <Input
               id="docName"
               value={docName}
               onChange={(e) => setDocName(e.target.value)}
-              placeholder="Ví dụ: P011534_A"
-              autoComplete="off"
-            />
-          </div>
-
-          {/* Loại tài liệu */}
-          <div className="space-y-1.5">
-            <Label htmlFor="docType">Loại tài liệu</Label>
-            <Input
-              id="docType"
-              value={docType}
-              onChange={(e) => setDocType(e.target.value)}
-              placeholder="Ví dụ: WI, SOP, Bản gốc, Bản sao..."
+              placeholder="Ví dụ: P011471_D"
               autoComplete="off"
             />
           </div>
 
           {/* Phiên bản (Rev) */}
           <div className="space-y-1.5">
-            <Label htmlFor="currentRev">Phiên bản hiện hành (Rev) <span className="text-destructive">*</span></Label>
+            <Label htmlFor="currentRev">Phiên bản (Rev.) <span className="text-destructive">*</span></Label>
             <Input
               id="currentRev"
               value={currentRev}
@@ -173,30 +173,6 @@ export function DocumentFormModal({
               type="date"
               value={issueDate}
               onChange={(e) => setIssueDate(e.target.value)}
-            />
-          </div>
-
-          {/* Khách hàng (Optional) */}
-          <div className="space-y-1.5">
-            <Label htmlFor="customer">Khách hàng (Không bắt buộc)</Label>
-            <Input
-              id="customer"
-              value={customer}
-              onChange={(e) => setCustomer(e.target.value)}
-              placeholder="Ví dụ: ASP..."
-              autoComplete="off"
-            />
-          </div>
-
-          {/* ASP P/N (Optional) */}
-          <div className="space-y-1.5">
-            <Label htmlFor="aspPn">ASP P/N (Không bắt buộc)</Label>
-            <Input
-              id="aspPn"
-              value={aspPn}
-              onChange={(e) => setAspPn(e.target.value)}
-              placeholder="Ví dụ: P011534..."
-              autoComplete="off"
             />
           </div>
         </div>

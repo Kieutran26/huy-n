@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn, formatDate } from "@/lib/utils";
 import { currentRevOf } from "@/lib/revUtils";
 
-type SortKey = "docCode" | "docName" | "docType" | "currentRev" | "issueDate";
+type SortKey = "docCode" | "docName" | "docType" | "currentRev" | "issueDate" | "customer";
 
 interface DocumentTableProps {
   documents: Document[];
@@ -23,6 +24,10 @@ interface DocumentTableProps {
   onHistory: (doc: Document) => void;
   onEdit: (doc: Document) => void;
   onDelete: (doc: Document) => void;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
+  onToggleSelectAll: () => void;
+  allSelected: boolean;
 }
 
 export function DocumentTable({
@@ -32,6 +37,10 @@ export function DocumentTable({
   onHistory,
   onEdit,
   onDelete,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+  allSelected,
 }: DocumentTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("docCode");
   const [asc, setAsc] = useState(true);
@@ -93,22 +102,34 @@ export function DocumentTable({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-12 text-center">
+              <Checkbox
+                checked={allSelected}
+                onChange={onToggleSelectAll}
+              />
+            </TableHead>
             <TableHead className="w-12">STT</TableHead>
-            <SortHead label="Mã tài liệu" k="docCode" />
-            <SortHead label="Tên tài liệu" k="docName" />
-            <SortHead label="Loại" k="docType" />
-            <SortHead label="Rev hiện hành" k="currentRev" />
+            <SortHead label="Khách hàng" k="customer" />
+            <SortHead label="Số sơ đồ" k="docCode" />
+            <SortHead label="Mã ASP" k="docName" />
+            <SortHead label="Phiên bản" k="currentRev" />
             <SortHead label="Ngày ban hành" k="issueDate" />
             <TableHead className="text-right w-60">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sorted.map(({ doc, currentRev }, i) => (
-            <TableRow key={doc.id}>
+            <TableRow key={doc.id} className={selectedIds.has(doc.id) ? "bg-muted/30" : ""}>
+              <TableCell className="text-center">
+                <Checkbox
+                  checked={selectedIds.has(doc.id)}
+                  onChange={() => onToggleSelect(doc.id)}
+                />
+              </TableCell>
               <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+              <TableCell>{doc.customer || "—"}</TableCell>
               <TableCell className="font-medium">{doc.docCode}</TableCell>
               <TableCell>{doc.docName}</TableCell>
-              <TableCell>{doc.docType || "—"}</TableCell>
               <TableCell>
                 <Badge variant="secondary">{currentRev || "—"}</Badge>
               </TableCell>

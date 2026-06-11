@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Download, FileText, Search, Upload, FileUp, Plus } from "lucide-react";
+import { Download, FileText, Search, Upload, FileUp, Plus, Trash2 } from "lucide-react";
 import type { Document, Employee } from "@/types";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useDistributions } from "@/hooks/useDistributions";
@@ -25,7 +25,7 @@ import { KEYS } from "@/lib/storage";
 import { todayISO } from "@/lib/utils";
 
 export default function Documents() {
-  const { documents, addDocument, updateDocument, deleteDocument, importDocuments } = useDocuments();
+  const { documents, addDocument, updateDocument, deleteDocument, deleteManyDocuments, importDocuments } = useDocuments();
   const { distributions, addMany, importDistributions } = useDistributions();
   const { employees, addEmployee } = useEmployees();
 
@@ -34,6 +34,10 @@ export default function Documents() {
   const [issueDoc, setIssueDoc] = useState<Document | null>(null);
   const [historyDoc, setHistoryDoc] = useState<Document | null>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
+
+  // Selection states
+  const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteDocOpen, setBulkDeleteDocOpen] = useState(false);
 
   // Form states
   const [formOpen, setFormOpen] = useState(false);
@@ -46,9 +50,42 @@ export default function Documents() {
     return documents.filter(
       (d) =>
         d.docCode.toLowerCase().includes(q) ||
-        d.docName.toLowerCase().includes(q)
+        d.docName.toLowerCase().includes(q) ||
+        (d.customer && d.customer.toLowerCase().includes(q))
     );
   }, [documents, search]);
+
+  // Selection logic
+  const allSelected = useMemo(() => {
+    return filtered.length > 0 && filtered.every((d) => selectedDocIds.has(d.id));
+  }, [filtered, selectedDocIds]);
+
+  function handleToggleSelect(id: string) {
+    setSelectedDocIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function handleToggleSelectAll() {
+    setSelectedDocIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        filtered.forEach((d) => next.delete(d.id));
+      } else {
+        filtered.forEach((d) => next.add(d.id));
+      }
+      return next;
+    });
+  }
+
+  function handleBulkDeleteDocs() {
+    deleteManyDocuments(Array.from(selectedDocIds));
+    toast.success(`Đã xóa ${selectedDocIds.size} tài liệu`);
+    setSelectedDocIds(new Set());
+    setBulkDeleteDocOpen(false);
+  }
 
   // --- Import Excel ---
   function handleExcelImport(parsed: ParsedExcel) {
@@ -224,7 +261,7 @@ export default function Documents() {
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-8"
-            placeholder="Tìm theo mã hoặc tên tài liệu..."
+            placeholder="Tìm theo mã, tên hoặc khách hàng..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -257,14 +294,46 @@ export default function Documents() {
           description="Thử từ khóa khác."
         />
       ) : (
-        <DocumentTable
-          documents={filtered}
-          distributions={distributions}
-          onIssue={(doc) => setIssueDoc(doc)}
-          onHistory={(doc) => setHistoryDoc(doc)}
-          onEdit={(doc) => setEditingDoc(doc)}
-          onDelete={(doc) => setToDeleteDoc(doc)}
-        />
+        <>
+          {/* Thanh hành động hàng loạt */}
+          {selectedDocIds.size > 0 && (
+            <div className="mb-4 flex items-center justify-between rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800 animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-center gap-2 font-medium">
+                <span>Đã chọn <b>{selectedDocIds.size}</b> tài liệu</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setBulkDeleteDocOpen(true)}
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Xóa hàng loạt
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-red-800 hover:bg-red-100"
+                  onClick={() => setSelectedDocIds(new Set())}
+                >
+                  Hủy chọn
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <DocumentTable
+            documents={filtered}
+            distributions={distributions}
+            onIssue={(doc) => setIssueDoc(doc)}
+            onHistory={(doc) => setHistoryDoc(doc)}
+            onEdit={(doc) => setEditingDoc(doc)}
+            onDelete={(doc) => setToDeleteDoc(doc)}
+            selectedIds={selectedDocIds}
+            onToggleSelect={handleToggleSelect}
+            onToggleSelectAll={handleToggleSelectAll}
+            allSelected={allSelected}
+          />
+        </>
       )}
 
       {/* Import Excel Modal */}
@@ -317,6 +386,17 @@ export default function Documents() {
         destructive
         onConfirm={confirmDeleteDoc}
         onOpenChange={(o) => !o && setToDeleteDoc(null)}
+      />
+
+      {/* Confirm Bulk Delete Documents Dialog */}
+      <ConfirmDialog
+        open={bulkDeleteDocOpen}
+        title="Xác nhận xóa hàng loạt tài liệu?"
+        description={`Bạn có chắc chắn muốn xóa ${selectedDocIds.size} tài liệu đã chọn? Lịch sử phân phát của những tài liệu này vẫn sẽ được giữ lại.`}
+        confirmText="Xóa tất cả"
+        destructive
+        onConfirm={handleBulkDeleteDocs}
+        onOpenChange={setBulkDeleteDocOpen}
       />
     </>
   );

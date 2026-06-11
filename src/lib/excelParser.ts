@@ -98,15 +98,20 @@ export function parseWorkbook(wb: XLSX.WorkBook): ParsedExcel {
     result.docSheetFound = true;
     for (let i = DATA_START_ROW; i < docRows.length; i++) {
       const row = docRows[i];
-      const docCode = cellStr(row, 1); // B
+      let docCode = cellStr(row, 2); // C: Số sơ đồ (WI no.)
       if (!docCode) continue;
+      if (/^\d+$/.test(docCode)) {
+        docCode = "EN-WI" + docCode.padStart(4, "0");
+      }
       result.documents.push({
         id: genId(),
         docCode,
-        docName: cellStr(row, 2), // C
-        currentRev: cellStr(row, 3), // D
-        docType: cellStr(row, 4), // E
-        issueDate: toISODate(row[7]), // H
+        docName: cellStr(row, 3), // D: Mã ASP (ASP P/N)
+        currentRev: cellStr(row, 4), // E: Phiên bản (Rev.)
+        docType: "WI",
+        issueDate: toISODate(row[5]), // F: Ngày ban hành (Issue date)
+        customer: cellStr(row, 1), // B: Khách hàng (Customer)
+        aspPn: cellStr(row, 3), // D: Mã ASP (ASP P/N)
       });
     }
   }
@@ -117,9 +122,12 @@ export function parseWorkbook(wb: XLSX.WorkBook): ParsedExcel {
     result.distSheetFound = true;
     for (let i = DATA_START_ROW; i < distRows.length; i++) {
       const row = distRows[i];
-      const docCode = cellStr(row, 1); // B
+      let docCode = cellStr(row, 1); // B
       const employeeId = cellStr(row, 8); // I
       if (!docCode || !employeeId) continue;
+      if (/^\d+$/.test(docCode)) {
+        docCode = "EN-WI" + docCode.padStart(4, "0");
+      }
       result.distributions.push({
         id: genId(),
         docCode,
