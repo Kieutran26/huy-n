@@ -76,6 +76,9 @@ export function HistoryModal({
               <TableHeader>
                 <TableRow>
                   <TableHead>Rev</TableHead>
+                  <TableHead>Loại TL</TableHead>
+                  <TableHead>Chi tiết</TableHead>
+                  <TableHead>Số lượng</TableHead>
                   <TableHead>Người nhận</TableHead>
                   <TableHead>Bộ phận</TableHead>
                   <TableHead>Ngày phân phát</TableHead>
@@ -87,6 +90,15 @@ export function HistoryModal({
                 {rows.map((d) => (
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{d.rev}</TableCell>
+                    <TableCell>
+                      <Badge variant={d.docType === "Bản sao" ? "warning" : "success"}>
+                        {d.docType || "Bản gốc"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-[120px] truncate" title={d.detail}>
+                      {d.detail || "—"}
+                    </TableCell>
+                    <TableCell>{d.quantity || "N/A"}</TableCell>
                     <TableCell>
                       {d.fullName}{" "}
                       <span className="text-muted-foreground">({d.employeeId})</span>

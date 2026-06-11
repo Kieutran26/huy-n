@@ -125,6 +125,9 @@ export function parseWorkbook(wb: XLSX.WorkBook): ParsedExcel {
         docCode,
         docName: cellStr(row, 2), // C
         rev: cellStr(row, 3), // D
+        docType: cellStr(row, 4) || "Bản gốc", // E
+        detail: cellStr(row, 5), // F
+        quantity: cellStr(row, 6) || "N/A", // G
         distributionDate: toISODate(row[7]), // H
         employeeId, // I
         dept: cellStr(row, 9), // J

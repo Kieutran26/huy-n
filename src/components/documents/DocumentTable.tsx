@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowUpDown, FilePlus2, History } from "lucide-react";
+import { ArrowUpDown, FilePlus2, History, Edit2, Trash2 } from "lucide-react";
 import type { Distribution, Document } from "@/types";
 import {
   Table,
@@ -21,6 +21,8 @@ interface DocumentTableProps {
   distributions: Distribution[];
   onIssue: (doc: Document) => void;
   onHistory: (doc: Document) => void;
+  onEdit: (doc: Document) => void;
+  onDelete: (doc: Document) => void;
 }
 
 export function DocumentTable({
@@ -28,6 +30,8 @@ export function DocumentTable({
   distributions,
   onIssue,
   onHistory,
+  onEdit,
+  onDelete,
 }: DocumentTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("docCode");
   const [asc, setAsc] = useState(true);
@@ -95,7 +99,7 @@ export function DocumentTable({
             <SortHead label="Loại" k="docType" />
             <SortHead label="Rev hiện hành" k="currentRev" />
             <SortHead label="Ngày ban hành" k="issueDate" />
-            <TableHead className="text-right">Thao tác</TableHead>
+            <TableHead className="text-right w-60">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -110,16 +114,23 @@ export function DocumentTable({
               </TableCell>
               <TableCell>{formatDate(doc.issueDate)}</TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-1.5">
-                  <Button size="sm" onClick={() => onIssue(doc)}>
-                    <FilePlus2 className="h-3.5 w-3.5" /> Ban hành mới
+                <div className="flex justify-end gap-1">
+                  <Button size="sm" onClick={() => onIssue(doc)} title="Ban hành Rev mới">
+                    <FilePlus2 className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => onHistory(doc)}
+                    title="Lịch sử phân phát"
                   >
-                    <History className="h-3.5 w-3.5" /> Lịch sử
+                    <History className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => onEdit(doc)} title="Chỉnh sửa">
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onDelete(doc)} title="Xóa tài liệu">
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </TableCell>

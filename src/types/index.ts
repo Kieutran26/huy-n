@@ -23,6 +23,9 @@ export interface Distribution {
   recalled: boolean;
   recalledDate: string | null;
   createdAt: string;
+  docType?: string;  // Loại tài liệu: Bản gốc, Bản sao
+  detail?: string;   // Chi tiết phân phát (ví dụ: Trang 5)
+  quantity?: string; // Số lượng phân phát (ví dụ: 5 hoặc N/A)
 }
 
 export interface Employee {

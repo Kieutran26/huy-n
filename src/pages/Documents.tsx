@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Download, FileText, Search, Upload, FileUp } from "lucide-react";
+import { Download, FileText, Search, Upload, FileUp, Plus } from "lucide-react";
 import type { Document, Employee } from "@/types";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useDistributions } from "@/hooks/useDistributions";
@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { toast } from "@/components/ui/toast";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DocumentTable } from "@/components/documents/DocumentTable";
 import { ImportExcelModal } from "@/components/documents/ImportExcelModal";
 import { IssueRevModal } from "@/components/documents/IssueRevModal";
 import { HistoryModal } from "@/components/documents/HistoryModal";
+import { DocumentFormModal, type DocumentFormValues } from "@/components/documents/DocumentFormModal";
 import type { ParsedExcel } from "@/lib/excelParser";
 import { currentRevOf } from "@/lib/revUtils";
 import { sendRecallEmail, isEmailConfigured } from "@/lib/emailService";
@@ -23,7 +25,7 @@ import { KEYS } from "@/lib/storage";
 import { todayISO } from "@/lib/utils";
 
 export default function Documents() {
-  const { documents, updateDocument, importDocuments } = useDocuments();
+  const { documents, addDocument, updateDocument, deleteDocument, importDocuments } = useDocuments();
   const { distributions, addMany, importDistributions } = useDistributions();
   const { employees, addEmployee } = useEmployees();
 
@@ -32,6 +34,11 @@ export default function Documents() {
   const [issueDoc, setIssueDoc] = useState<Document | null>(null);
   const [historyDoc, setHistoryDoc] = useState<Document | null>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
+
+  // Form states
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<Document | null>(null);
+  const [toDeleteDoc, setToDeleteDoc] = useState<Document | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -92,6 +99,9 @@ export default function Documents() {
         distributionDate: date,
         recalled: false,
         recalledDate: null,
+        docType: "Bản gốc",
+        detail: "",
+        quantity: "N/A",
       }))
     );
 
@@ -148,6 +158,28 @@ export default function Documents() {
     }
   }
 
+  // --- Manual Add/Edit/Delete ---
+  function handleFormSubmit(values: DocumentFormValues) {
+    if (editingDoc) {
+      updateDocument({
+        ...editingDoc,
+        ...values,
+      });
+      toast.success("Đã cập nhật tài liệu");
+      setEditingDoc(null);
+    } else {
+      addDocument(values);
+      toast.success("Đã thêm mới tài liệu thành công");
+    }
+  }
+
+  function confirmDeleteDoc() {
+    if (!toDeleteDoc) return;
+    deleteDocument(toDeleteDoc.id);
+    toast.success("Đã xóa tài liệu");
+    setToDeleteDoc(null);
+  }
+
   return (
     <>
       <PageHeader
@@ -164,8 +196,14 @@ export default function Documents() {
             >
               <Upload className="h-4 w-4" /> Nhập JSON
             </Button>
-            <Button onClick={() => setImportOpen(true)}>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
               <FileUp className="h-4 w-4" /> Import Excel
+            </Button>
+            <Button onClick={() => {
+              setEditingDoc(null);
+              setFormOpen(true);
+            }}>
+              <Plus className="h-4 w-4" /> Thêm tài liệu
             </Button>
             <input
               ref={jsonInputRef}
@@ -197,11 +235,19 @@ export default function Documents() {
         <EmptyState
           icon={<FileText className="h-6 w-6" />}
           title="Chưa có tài liệu"
-          description="Import file Excel để bắt đầu quản lý tài liệu và phân phát."
+          description="Bấm 'Thêm tài liệu' hoặc Import file Excel để bắt đầu quản lý tài liệu và phân phát."
           action={
-            <Button onClick={() => setImportOpen(true)}>
-              <FileUp className="h-4 w-4" /> Import Excel
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => {
+                setEditingDoc(null);
+                setFormOpen(true);
+              }}>
+                <Plus className="h-4 w-4" /> Thêm tài liệu
+              </Button>
+              <Button variant="outline" onClick={() => setImportOpen(true)}>
+                <FileUp className="h-4 w-4" /> Import Excel
+              </Button>
+            </div>
           }
         />
       ) : filtered.length === 0 ? (
@@ -216,15 +262,19 @@ export default function Documents() {
           distributions={distributions}
           onIssue={(doc) => setIssueDoc(doc)}
           onHistory={(doc) => setHistoryDoc(doc)}
+          onEdit={(doc) => setEditingDoc(doc)}
+          onDelete={(doc) => setToDeleteDoc(doc)}
         />
       )}
 
+      {/* Import Excel Modal */}
       <ImportExcelModal
         open={importOpen}
         onOpenChange={setImportOpen}
         onConfirm={handleExcelImport}
       />
 
+      {/* Issue Rev Modal */}
       <IssueRevModal
         open={!!issueDoc}
         doc={issueDoc}
@@ -234,11 +284,39 @@ export default function Documents() {
         onConfirm={handleIssue}
       />
 
+      {/* History Modal */}
       <HistoryModal
         open={!!historyDoc}
         doc={historyDoc}
         distributions={distributions}
         onOpenChange={(o) => !o && setHistoryDoc(null)}
+      />
+
+      {/* Add / Edit Document Modal */}
+      <DocumentFormModal
+        open={formOpen || !!editingDoc}
+        initial={editingDoc}
+        onOpenChange={(o) => {
+          setFormOpen(o);
+          if (!o) setEditingDoc(null);
+        }}
+        onSubmit={handleFormSubmit}
+        existingCodes={documents.map((d) => d.docCode)}
+      />
+
+      {/* Confirm Delete Document Dialog */}
+      <ConfirmDialog
+        open={!!toDeleteDoc}
+        title="Xác nhận xóa tài liệu?"
+        description={
+          toDeleteDoc
+            ? `Bạn có chắc chắn muốn xóa tài liệu ${toDeleteDoc.docCode} (${toDeleteDoc.docName})? Lịch sử phân phát của tài liệu này vẫn sẽ được giữ lại.`
+            : ""
+        }
+        confirmText="Xóa"
+        destructive
+        onConfirm={confirmDeleteDoc}
+        onOpenChange={(o) => !o && setToDeleteDoc(null)}
       />
     </>
   );

@@ -60,7 +60,7 @@ export default function Dashboard() {
   const { employees } = useEmployees();
   const [toRecall, setToRecall] = useState<Distribution | null>(null);
 
-  const pending = useMemo(() => pendingRecalls(distributions), [distributions]);
+  const pending = useMemo(() => pendingRecalls(distributions, documents), [distributions, documents]);
 
   const issuedToday = useMemo(
     () => distributions.filter((d) => isToday(d.distributionDate)).length,
@@ -159,7 +159,10 @@ export default function Dashboard() {
               <TableRow>
                 <TableHead>Mã tài liệu</TableHead>
                 <TableHead>Tên</TableHead>
-                <TableHead>Rev cần thu hồi</TableHead>
+                <TableHead>Rev</TableHead>
+                <TableHead>Loại TL</TableHead>
+                <TableHead>Chi tiết</TableHead>
+                <TableHead>Số lượng</TableHead>
                 <TableHead>Người giữ</TableHead>
                 <TableHead>Bộ phận</TableHead>
                 <TableHead>Ngày phân phát</TableHead>
@@ -174,6 +177,15 @@ export default function Dashboard() {
                   <TableCell>
                     <Badge variant="secondary">{d.rev}</Badge>
                   </TableCell>
+                  <TableCell>
+                    <Badge variant={d.docType === "Bản sao" ? "warning" : "success"}>
+                      {d.docType || "Bản gốc"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-[120px] truncate" title={d.detail}>
+                    {d.detail || "—"}
+                  </TableCell>
+                  <TableCell>{d.quantity || "N/A"}</TableCell>
                   <TableCell>
                     {d.fullName}{" "}
                     <span className="text-muted-foreground">({d.employeeId})</span>
@@ -242,7 +254,7 @@ export default function Dashboard() {
         title="Xác nhận thu hồi"
         description={
           toRecall
-            ? `Xác nhận đã thu hồi bản Rev ${toRecall.rev} của ${toRecall.fullName} (${toRecall.employeeId})?`
+            ? `Xác nhận đã thu hồi bản Rev ${toRecall.rev} (${toRecall.docType || "Bản gốc"}${toRecall.detail ? ` - ${toRecall.detail}` : ""}) của ${toRecall.fullName} (${toRecall.employeeId})?`
             : ""
         }
         confirmText="Đã thu hồi"

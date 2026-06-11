@@ -5,14 +5,16 @@ import { getSnapshot, subscribe, writeStore } from "@/lib/store";
 import { genId } from "@/lib/utils";
 import { todayISO } from "@/lib/utils";
 
-/** Khóa nhận diện trùng: docCode + rev + employeeId + distributionDate. */
+/** Khóa nhận diện trùng: docCode + rev + employeeId + distributionDate + docType + detail. */
 function dupKey(d: {
   docCode: string;
   rev: string;
   employeeId: string;
   distributionDate: string;
+  docType?: string;
+  detail?: string;
 }): string {
-  return `${d.docCode}__${d.rev}__${d.employeeId}__${d.distributionDate}`;
+  return `${d.docCode}__${d.rev}__${d.employeeId}__${d.distributionDate}__${d.docType || ""}__${d.detail || ""}`;
 }
 
 export function useDistributions() {
@@ -46,6 +48,20 @@ export function useDistributions() {
       ...created,
     ]);
     return created;
+  }, []);
+
+  const updateDistribution = useCallback((dist: Distribution) => {
+    const list = getSnapshot<Distribution>(KEYS.DISTRIBUTIONS).map((d) =>
+      d.id === dist.id ? dist : d
+    );
+    writeStore(KEYS.DISTRIBUTIONS, list);
+  }, []);
+
+  const deleteDistribution = useCallback((id: string) => {
+    writeStore(
+      KEYS.DISTRIBUTIONS,
+      getSnapshot<Distribution>(KEYS.DISTRIBUTIONS).filter((d) => d.id !== id)
+    );
   }, []);
 
   const recallDistribution = useCallback((id: string) => {
@@ -84,6 +100,8 @@ export function useDistributions() {
     distributions,
     addDistribution,
     addMany,
+    updateDistribution,
+    deleteDistribution,
     recallDistribution,
     importDistributions,
   };
