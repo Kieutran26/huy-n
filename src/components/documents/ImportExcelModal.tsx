@@ -83,7 +83,7 @@ export function ImportExcelModal({
         <div
           className={cn(
             "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors",
-            dragging ? "border-primary bg-primary/5" : "border-input"
+            dragging ? "border-[#1e3a5f] bg-[#1e3a5f]/5" : "border-[#e2e8f0]"
           )}
           onClick={() => inputRef.current?.click()}
           onDragOver={(e) => {
@@ -99,9 +99,9 @@ export function ImportExcelModal({
           }}
         >
           {loading ? (
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#1e3a5f]" />
           ) : (
-            <UploadCloud className="h-8 w-8 text-muted-foreground" />
+            <UploadCloud className="h-8 w-8 text-[#64748b]" />
           )}
           <p className="text-sm font-medium">
             {fileName || "Kéo thả hoặc bấm để chọn file .xlsx"}

@@ -30,8 +30,8 @@ export function Checkbox({
       className={cn(
         "flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors disabled:opacity-50",
         checked || indeterminate
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-input bg-white",
+          ? "border-[#1e3a5f] bg-[#1e3a5f] text-white"
+          : "border-[#e2e8f0] bg-white",
         className
       )}
     >

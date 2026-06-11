@@ -100,7 +100,7 @@ export default function Settings() {
       {/* EmailJS */}
       <Card className="mb-6">
         <div className="flex items-center gap-2 border-b px-5 py-4">
-          <Mail className="h-5 w-5 text-primary" />
+          <Mail className="h-5 w-5 text-[#1e3a5f]" />
           <h2 className="font-semibold">Cấu hình EmailJS</h2>
         </div>
         <CardContent className="space-y-4 pt-5">
@@ -174,7 +174,7 @@ export default function Settings() {
           onClick={() => setGuideOpen((v) => !v)}
         >
           <span className="flex items-center gap-2 font-semibold">
-            <HelpCircle className="h-5 w-5 text-primary" /> Hướng dẫn cấu hình
+            <HelpCircle className="h-5 w-5 text-[#1e3a5f]" /> Hướng dẫn cấu hình
             EmailJS
           </span>
           <ChevronDown
@@ -192,7 +192,7 @@ export default function Settings() {
                 href="https://emailjs.com"
                 target="_blank"
                 rel="noreferrer"
-                className="text-primary underline"
+                className="text-[#1e3a5f] underline"
               >
                 emailjs.com
               </a>
@@ -223,7 +223,7 @@ export default function Settings() {
       {/* Dữ liệu */}
       <Card>
         <div className="flex items-center gap-2 border-b px-5 py-4">
-          <Database className="h-5 w-5 text-primary" />
+          <Database className="h-5 w-5 text-[#1e3a5f]" />
           <h2 className="font-semibold">Dữ liệu</h2>
         </div>
         <CardContent className="flex flex-wrap gap-2 pt-5">
